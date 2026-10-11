@@ -1,4 +1,9 @@
+import asyncio
+import logging
 import os
+import re
+from contextlib import asynccontextmanager
+from datetime import datetime
 
 import db
 import httpx
@@ -15,7 +20,41 @@ IGNAV_URL = "https://ignav.com/api/fares/one-way"
 IGNAV_KEY = os.getenv("IGNAV_API_KEY")
 CACHE_TTL_MINUTES = 30
 
-app = FastAPI(title="Jarvis API")
+log = logging.getLogger("jarvis.watcher")
+WATCH_INTERVAL_HOURS = float(os.getenv("WATCH_INTERVAL_HOURS", "48"))
+# format: MRU-CDG-2026-12-15,MRU-DXB-2026-12-20
+WATCH_ROUTES = [
+    r.strip().split("-", 2)
+    for r in os.getenv("WATCH_ROUTES", "").split(",")
+    if r.strip().count("-") == 4
+]
+
+
+async def _watch_loop():
+    await asyncio.sleep(30)  # let the server finish starting
+    while True:
+        for parts in WATCH_ROUTES:
+            origin, destination, date = parts[0], parts[1], parts[2]
+            try:
+                if datetime.strptime(date, "%Y-%m-%d").date() < datetime.now().date():
+                    continue  # flight date already passed
+                await flights(origin=origin, destination=destination, date=date)
+                log.warning("watched %s-%s %s", origin, destination, date)
+            except Exception as e:
+                log.warning("watch failed %s-%s %s: %r", origin, destination, date, e)
+            await asyncio.sleep(5)
+        await asyncio.sleep(WATCH_INTERVAL_HOURS * 3600)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(_watch_loop()) if WATCH_ROUTES else None
+    yield
+    if task:
+        task.cancel()
+
+
+app = FastAPI(title="Jarvis API", lifespan=lifespan)
 db.init_db()
 
 
@@ -129,9 +168,6 @@ def _line(f):
     return f"{f['carrier']}, {f['price']} {f['currency']}, {stops}, {_hm(f['duration_minutes'])}"
 
 
-import re
-
-
 def _numbers(text):
     return {float(n) for n in re.findall(r"\d+(?:\.\d+)?", text)}
 
@@ -198,6 +234,8 @@ async def advice(
         "advice_source": "llm" if text else "fallback",
         "cached": data["cached"],
     }
+
+
 @app.get("/history")
 async def history(
     origin: str = Query(..., pattern=r"^[A-Za-z]{3}$"),
