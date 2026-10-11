@@ -9,6 +9,7 @@ import db
 import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 load_dotenv()
@@ -262,3 +263,9 @@ async def history(
         "change_vs_previous": change,
         "history": points,
     }
+@app.get("/routes")
+async def routes():
+    return {"routes": db.get_latest_routes()}
+@app.get("/", include_in_schema=False)
+async def dashboard():
+    return FileResponse(os.path.join(os.path.dirname(__file__), "index.html"))

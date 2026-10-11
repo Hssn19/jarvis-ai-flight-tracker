@@ -70,3 +70,14 @@ def get_history(origin: str, destination: str, date: str, limit: int = 100):
             (origin, destination, date, limit),
         ).fetchall()
     return [{"fetched_at": r["fetched_at"], "cheapest": r["cheapest"]} for r in reversed(rows)]
+def get_latest_routes():
+    with closing(_conn()) as c:
+        rows = c.execute(
+            "SELECT origin, destination, date, fetched_at, cheapest FROM searches s "
+            "WHERE cheapest IS NOT NULL AND fetched_at = ("
+            "  SELECT MAX(fetched_at) FROM searches "
+            "  WHERE origin=s.origin AND destination=s.destination "
+            "  AND date=s.date AND cheapest IS NOT NULL"
+            ") ORDER BY destination"
+        ).fetchall()
+    return [dict(r) for r in rows]

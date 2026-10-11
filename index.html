@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Flight Tracker</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:24px; font-family: system-ui, sans-serif; background:var(--bg); color:var(--text); }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { margin: 0 0 4px; }
+  .sub { color: var(--muted); margin-bottom: 24px; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border-radius:12px; overflow:hidden; }
+  th, td { padding: 12px 14px; text-align: left; }
+  th { color: var(--muted); font-size: 13px; font-weight: 500; }
+  tr + tr td { border-top: 1px solid #334155; }
+  .price { font-weight: 600; color: var(--accent); }
+  button { background: var(--accent); color:#0f172a; border:0; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:600; }
+  button:disabled { opacity:.5; cursor:wait; }
+  .box { background: var(--card); border-radius: 12px; padding: 16px; margin-top: 20px; display: none; line-height: 1.5; }
+  .muted { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Jarvis Flight Tracker</h1>
+  <div class="sub">Departures from Mauritius · prices in USD</div>
+  <table>
+    <thead>
+      <tr><th>Route</th><th>Date</th><th>Cheapest</th><th>Last checked</th><th></th></tr>
+    </thead>
+    <tbody id="rows"><tr><td colspan="5">Loading...</td></tr></tbody>
+  </table>
+  <div class="box" id="box"></div>
+</div>
+
+<script>
+const CITIES = {
+  CDG: "Paris", DXB: "Dubai", LHR: "London", JNB: "Johannesburg", RUN: "Reunion",
+  BOM: "Mumbai", BKK: "Bangkok", FRA: "Frankfurt", AMS: "Amsterdam", JED: "Jeddah",
+  IST: "Istanbul", ADD: "Addis Ababa", DOH: "Doha", NBO: "Nairobi", SIN: "Singapore"
+};
+
+const rows = document.getElementById("rows");
+const box = document.getElementById("box");
+
+function cell(tr, text, cls) {
+  const td = document.createElement("td");
+  td.textContent = text;
+  if (cls) td.className = cls;
+  tr.appendChild(td);
+  return td;
+}
+
+async function ask(r, btn) {
+  btn.disabled = true;
+  box.style.display = "block";
+  box.textContent = "Jarvis is thinking... the first answer can take up to 30 seconds.";
+  try {
+    const url = `/advice?origin=${r.origin}&destination=${r.destination}&date=${r.date}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || res.status);
+    box.textContent = "";
+    const p = document.createElement("div");
+    p.textContent = data.advice;
+    const src = document.createElement("div");
+    src.className = "muted";
+    src.textContent = `Source: ${data.advice_source}`;
+    box.appendChild(p);
+    box.appendChild(src);
+  } catch (e) {
+    box.textContent = "Could not get advice: " + e.message;
+  }
+  btn.disabled = false;
+}
+
+async function load() {
+  try {
+    const res = await fetch("/routes");
+    const data = await res.json();
+    rows.textContent = "";
+    if (!data.routes.length) {
+      rows.innerHTML = "<tr><td colspan='5'>No routes saved yet.</td></tr>";
+      return;
+    }
+    for (const r of data.routes) {
+      const tr = document.createElement("tr");
+      cell(tr, `${r.origin} to ${r.destination} (${CITIES[r.destination] || r.destination})`);
+      cell(tr, r.date);
+      cell(tr, `$${r.cheapest.toFixed(0)}`, "price");
+      cell(tr, new Date(r.fetched_at).toLocaleString(), "muted");
+      const td = document.createElement("td");
+      const btn = document.createElement("button");
+      btn.textContent = "Ask Jarvis";
+      btn.onclick = () => ask(r, btn);
+      td.appendChild(btn);
+      tr.appendChild(td);
+      rows.appendChild(tr);
+    }
+  } catch (e) {
+    rows.innerHTML = "<tr><td colspan='5'>Could not load routes.</td></tr>";
+  }
+}
+
+load();
+</script>
+</body>
+</html>
