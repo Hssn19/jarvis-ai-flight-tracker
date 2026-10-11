@@ -1,0 +1,6 @@
+.venv
+.env
+jarvis.db
+__pycache__
+sample.json
+test_ignav.py
