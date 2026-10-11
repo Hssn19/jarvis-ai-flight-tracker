@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import sqlite3
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
@@ -38,7 +38,6 @@ def init_db():
 
 
 def get_cached(origin: str, destination: str, date: str, ttl_minutes: int = 30):
-    """Return the newest saved result if it is younger than ttl_minutes, else None."""
     cutoff = (_now() - timedelta(minutes=ttl_minutes)).isoformat()
     with closing(_conn()) as c:
         row = c.execute(
@@ -60,3 +59,14 @@ def save_search(origin: str, destination: str, date: str, payload: dict, cheapes
             (origin, destination, date, _now().isoformat(), cheapest, json.dumps(payload)),
         )
         c.commit()
+
+
+def get_history(origin: str, destination: str, date: str, limit: int = 100):
+    with closing(_conn()) as c:
+        rows = c.execute(
+            "SELECT fetched_at, cheapest FROM searches "
+            "WHERE origin=? AND destination=? AND date=? AND cheapest IS NOT NULL "
+            "ORDER BY fetched_at DESC LIMIT ?",
+            (origin, destination, date, limit),
+        ).fetchall()
+    return [{"fetched_at": r["fetched_at"], "cheapest": r["cheapest"]} for r in reversed(rows)]

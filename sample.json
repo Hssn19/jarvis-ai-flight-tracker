@@ -1,0 +1,49 @@
+{
+  "price": {
+    "amount": 689.0,
+    "currency": "USD",
+    "status": "verified"
+  },
+  "outbound": {
+    "carrier": "Air Austral",
+    "duration_minutes": 850,
+    "segments": [
+      {
+        "marketing_carrier_code": "UU",
+        "flight_number": "109",
+        "operating_carrier_name": "Air Austral",
+        "departure_airport": "MRU",
+        "departure_time_local": "2026-12-15T18:20:00",
+        "departure_timezone": "Indian/Mauritius",
+        "departure_time_utc": "2026-12-15T14:20:00Z",
+        "arrival_airport": "RUN",
+        "arrival_time_local": "2026-12-15T19:05:00",
+        "arrival_timezone": "Indian/Reunion",
+        "arrival_time_utc": "2026-12-15T15:05:00Z",
+        "duration_minutes": 45,
+        "aircraft": "Boeing 737"
+      },
+      {
+        "marketing_carrier_code": "UU",
+        "flight_number": "975",
+        "operating_carrier_name": "Air Austral",
+        "departure_airport": "RUN",
+        "departure_time_local": "2026-12-15T20:40:00",
+        "departure_timezone": "Indian/Reunion",
+        "departure_time_utc": "2026-12-15T16:40:00Z",
+        "arrival_airport": "CDG",
+        "arrival_time_local": "2026-12-16T05:30:00",
+        "arrival_timezone": "Europe/Paris",
+        "arrival_time_utc": "2026-12-16T04:30:00Z",
+        "duration_minutes": 710,
+        "aircraft": "Boeing 777"
+      }
+    ]
+  },
+  "cabin_class": "economy",
+  "bags": {
+    "carry_on": 1
+  },
+  "requires_self_transfer": false,
+  "ignav_id": "cd644612523e4ca2b0cf1f0484312ec7"
+}

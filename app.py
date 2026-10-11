@@ -198,3 +198,29 @@ async def advice(
         "advice_source": "llm" if text else "fallback",
         "cached": data["cached"],
     }
+@app.get("/history")
+async def history(
+    origin: str = Query(..., pattern=r"^[A-Za-z]{3}$"),
+    destination: str = Query(..., pattern=r"^[A-Za-z]{3}$"),
+    date: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
+):
+    origin, destination = origin.upper(), destination.upper()
+    points = db.get_history(origin, destination, date)
+    if not points:
+        raise HTTPException(404, "No history yet. Call /flights for this route first.")
+
+    prices = [p["cheapest"] for p in points]
+    latest = prices[-1]
+    change = round(latest - prices[-2], 2) if len(prices) > 1 else None
+
+    return {
+        "origin": origin,
+        "destination": destination,
+        "date": date,
+        "points": len(points),
+        "latest": latest,
+        "lowest": min(prices),
+        "highest": max(prices),
+        "change_vs_previous": change,
+        "history": points,
+    }
