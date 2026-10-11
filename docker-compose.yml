@@ -13,8 +13,10 @@ services:
       - "8000:8000"
     env_file: .env
     environment:
-      OLLAMA_BASE: http://ollama:11434
-      DB_PATH: /data/jarvis.db
+      WATCH_ROUTES: "MRU-CDG-2026-12-15,MRU-DXB-2026-12-20,MRU-LHR-2026-12-18,MRU-JNB-2026-12-10,MRU-RUN-2026-12-12,MRU-BOM-2026-12-22,MRU-BKK-2026-12-17,MRU-FRA-2026-12-16,MRU-AMS-2026-12-19,MRU-JED-2026-12-21,MRU-IST-2026-12-14,MRU-ADD-2026-12-13,MRU-DOH-2026-12-11,MRU-NBO-2026-12-23,MRU-SIN-2026-12-24"
+      WATCH_INTERVAL_HOURS: "48"
+      OLLAMA_BASE: "http://ollama:11434"
+      DB_PATH: "/data/jarvis.db"
     volumes:
       - jarvis-data:/data
     depends_on:
